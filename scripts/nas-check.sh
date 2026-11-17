@@ -5,8 +5,17 @@
 # 사용법 : sh nas-check.sh <원본 폴더> <NAS 폴더> <파일 이름> <feed 이름>
 #   feed : 파일 종류를 구분하는 짧은 이름 (예: cstr_a). Grafana에서 줄 이름이 됨
 #          날짜·빌드번호가 들어간 파일명은 매번 바뀌므로 label로 쓰지 않음 (cardinality 주의)
-# 상태값 : 0 OK / 1 EMPTY / 2 NAS_MISSING / 3 SOURCE_MISSING / 4 SIZE_MISMATCH / 5 CHECK_ERROR
-# 종료 코드 : 0 정상 / 10 0바이트(주황) / 20 그 외 실패(빨강) → Jenkins 색 판단용
+#
+# 상태값 (batch_file_status)
+#   0 = OK              정상
+#   1 = EMPTY           0바이트 (원본도 0바이트)        → 주황
+#   2 = NAS_MISSING     원본은 있는데 적재 파일 없음    → 빨강
+#   3 = SOURCE_MISSING  원본부터 없음                   → 빨강
+#   4 = SIZE_MISMATCH   원본과 적재 파일 크기가 다름    → 빨강
+#   5 = CHECK_ERROR     확인 자체 실패 (폴더 없음 등)   → 빨강
+#
+# 종료 코드 (Jenkins 색 판단용)
+#   0 = 정상 / 10 = 0바이트(주황) / 20 = 그 외 실패(빨강)
 # ============================================================
 
 SRC_DIR="$1"   # 원본 폴더 (가짜 SFTP)
@@ -23,6 +32,11 @@ size_of() {
   if [ -f "$1" ]; then wc -c < "$1" | tr -d ' '; else echo -1; fi
 }
 
+# 콘솔 표시용: -1 이면 "not found", 아니면 "N bytes"
+show_size() {
+  if [ "$1" -eq -1 ]; then echo "not found"; else echo "$1 bytes"; fi
+}
+
 # 위에서부터 먼저 맞는 조건이 결과가 됨 (순서 중요)
 if [ -z "$FEED" ] || [ ! -d "$SRC_DIR" ] || [ ! -d "$NAS_DIR" ]; then
   STATUS=5; SRC=-1; NAS=-1                                         # 확인 자체 실패 (인자 누락, 폴더 없음)
@@ -37,9 +51,20 @@ else
   fi
 fi
 
+# 상태값 → 이름 (콘솔에서 번호 대신 이름으로 바로 알 수 있게)
+case "$STATUS" in
+  0) NAME="OK" ;;
+  1) NAME="EMPTY" ;;
+  2) NAME="NAS_MISSING" ;;
+  3) NAME="SOURCE_MISSING" ;;
+  4) NAME="SIZE_MISMATCH" ;;
+  *) NAME="CHECK_ERROR" ;;
+esac
+
 # 콘솔에 남기는 기록 (Jenkins Console Output에서 보임)
-echo "[NAS-CHECK] source size = $SRC, nas size = $NAS (-1 = 없음)"
-echo "[NAS-CHECK] STATUS=$STATUS (0 OK/1 EMPTY/2 NAS_MISSING/3 SOURCE_MISSING/4 SIZE_MISMATCH/5 CHECK_ERROR)"
+echo "[NAS-CHECK] source file : $(show_size "$SRC")"
+echo "[NAS-CHECK] nas file    : $(show_size "$NAS")"
+echo "[NAS-CHECK] result      : $STATUS = $NAME"
 
 # .prom 파일 쓰기: 임시 파일에 다 쓴 다음 mv로 한 번에 교체
 # (node exporter가 반쯤 쓰인 파일을 읽는 것을 막기 위함. 임시 파일은 끝이 .prom이 아니라 무시됨)
