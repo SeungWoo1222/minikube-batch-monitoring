@@ -27,18 +27,18 @@ SIZE=-1        # 적재 파일 크기 (-1 = 없음)
 EXPECTED=""    # .sha256에 적힌 해시
 ACTUAL=""      # 지금 적재 파일의 해시
 
-# ?
+# 판정: 위에서부터 차례로 확인해서, 처음 걸리는 조건으로 STATUS(0~5)를 정함
 if [ -z "$NAS_DIR" ] || [ -z "$FILE" ] || [ -z "$FEED" ] || ! command -v sha256sum >/dev/null 2>&1; then
   STATUS=5 # CHECK_ERROR
 elif [ ! -f "$DATA" ]; then # 데이터 파일이 없다면 NOT_FOUND
   STATUS=2 
 else # 데이터 파일이 있는경우
-  SIZE=$(wc -c < "$DATA" | tr -d ' ') # 원본 파일의 크기 정의
+  SIZE=$(wc -c < "$DATA" | tr -d ' ') # NAS에 적재된 파일의 크기
   if [ ! -f "$SUM" ]; then # 체크썸 파일이 없다면 CHECKSUM_MISSING
     STATUS=3 
   else # SHA 비교 시작
     EXPECTED=$(cut -d' ' -f1 "$SUM" | head -n 1) # .sha256 파일에서 해시 꺼냄
-    ACTUAL=$(sha256sum "$DATA" | cut -d' ' -f1) # 원본 파일의 해시를 계산
+    ACTUAL=$(sha256sum "$DATA" | cut -d' ' -f1) # NAS에 적재된 파일의 해시를 계산
     if [ ${#EXPECTED} -ne 64 ]; then STATUS=5      # 해시는 항상 64글자, 아니라면 CHECK_ERROR
     elif [ "$EXPECTED" != "$ACTUAL" ]; then STATUS=4 # 두 해시가 다르면 CHECKSUM_MISMATCH
     elif [ "$SIZE" -eq 0 ]; then STATUS=1 # 해시는 일치하지만 사이즈가 0이라면 EMPTY
@@ -58,7 +58,7 @@ esac
 # [NAS-CHECK] nas file : 818 bytes
 # [NAS-CHECK] expected : f0019428...361b
 # [NAS-CHECK] actual   : 3c9e...(잘린 파일의 해시)
-# [NAS-CHECK] result: 4 = CHECKSUM_MISMATCH (size=818)
+# [NAS-CHECK] result: 4 = CHECKSUM_MISMATCH
 echo "[NAS-CHECK] nas file : $( [ "$SIZE" -eq -1 ] && echo "not found" || echo "$SIZE bytes" )"
 echo "[NAS-CHECK] expected : ${EXPECTED:-none}"
 echo "[NAS-CHECK] actual   : ${ACTUAL:-none}"
