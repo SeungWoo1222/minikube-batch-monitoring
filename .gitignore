@@ -1,0 +1,6 @@
+k8s/monitoring-values.yaml
+k8s/jenkins-values.yaml
+app/demo-batch/target/
+app/demo-batch/out/
+.vscode/
+.idea/

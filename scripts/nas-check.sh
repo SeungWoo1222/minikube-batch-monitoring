@@ -1,89 +1,84 @@
 #!/bin/sh
-# ============================================================
-# nas-check.sh : 원본 파일(SFTP)과 적재 파일(NAS)을 비교해서
-#                결과를 node exporter용 .prom 파일로 남기는 스크립트
-# 사용법 : sh nas-check.sh <원본 폴더> <NAS 폴더> <파일 이름> <feed 이름>
-#   feed : 파일 종류를 구분하는 짧은 이름 (예: cstr_a). Grafana에서 줄 이름이 됨
-#          날짜·빌드번호가 들어간 파일명은 매번 바뀌므로 label로 쓰지 않음 (cardinality 주의)
+# nas-check.sh <NAS 날짜 폴더> <파일 이름> <feed 이름>
+# 적재 파일과 .sha256(배치가 받으면서 계산한 해시)을 비교해서 결과를 .prom 파일로 남김
 #
-# 상태값 (batch_file_status)
-#   0 = OK              정상
-#   1 = EMPTY           0바이트 (원본도 0바이트)        → 주황
-#   2 = NAS_MISSING     원본은 있는데 적재 파일 없음    → 빨강
-#   3 = SOURCE_MISSING  원본부터 없음                   → 빨강
-#   4 = SIZE_MISMATCH   원본과 적재 파일 크기가 다름    → 빨강
-#   5 = CHECK_ERROR     확인 자체 실패 (폴더 없음 등)   → 빨강
+# 상태값
+#   0 OK                 데이터 + .sha256 있음, 해시 일치, 크기 > 0
+#   1 EMPTY              해시는 일치하지만 크기 0
+#   2 NOT_FOUND          데이터 파일 없음 (받을 파일이 없었거나, 받기 전에 실패)
+#   3 CHECKSUM_MISSING   데이터는 있는데 .sha256 없음 (쓰다가 죽었을 수 있음)
+#   4 CHECKSUM_MISMATCH  해시 불일치 (적재 후 바뀌었거나 덜 써짐)
+#   5 CHECK_ERROR        검사 자체를 못 함 (인자 누락, .sha256 형식 이상, sha256sum 없음)
 #
-# 종료 코드 (Jenkins 색 판단용)
-#   0 = 정상 / 10 = 0바이트(주황) / 20 = 그 외 실패(빨강)
-# ============================================================
+# 판정만 기록하고 종료 코드는 항상 0 → Jenkins 빌드 결과를 바꾸지 않음 (판정은 Grafana에서)
 
-SRC_DIR="$1"   # 원본 폴더 (가짜 SFTP)
-NAS_DIR="$2"   # 적재 폴더 (가짜 NAS)
-FILE="$3"      # 확인할 파일 이름
-FEED="$4"      # 파일 종류 이름
-PROM_DIR="${PROM_DIR:-/data/textfile}"   # node exporter가 읽는 폴더 (지정 안 하면 이 값)
+# NAS_DIR = NAS파일의 위치
+# FILE = 비교할 파일 ex) CSTR_A_b11.csv
+# FEED = 어느 작업의 결과인지 구분하는 이름 ex) demo-batch-run
+NAS_DIR="$1"; FILE="$2"; FEED="$3"
+PROM_DIR="${PROM_DIR:-/data/textfile}"
+DATA="$NAS_DIR/$FILE"
+SUM="$DATA.sha256"
 
-echo "===== [NAS-CHECK] start feed=$FEED file=$FILE ====="
+echo "===== [NAS-CHECK] start feed=$FEED file=$DATA ====="
 
-# 파일 크기(바이트)를 출력. 파일이 없으면 -1 (0바이트 파일과 구분하기 위해 0이 아닌 -1)
-# ※ 실제 SFTP로 바꿀 때는 원본 쪽을 이 함수 대신 sftp 명령으로 구하면 됨
-size_of() {
-  if [ -f "$1" ]; then wc -c < "$1" | tr -d ' '; else echo -1; fi
-}
+# 결과를 담을 변수
+SIZE=-1        # 적재 파일 크기 (-1 = 없음)
+EXPECTED=""    # .sha256에 적힌 해시
+ACTUAL=""      # 지금 적재 파일의 해시
 
-# 콘솔 표시용: -1 이면 "not found", 아니면 "N bytes"
-show_size() {
-  if [ "$1" -eq -1 ]; then echo "not found"; else echo "$1 bytes"; fi
-}
-
-# 위에서부터 먼저 맞는 조건이 결과가 됨 (순서 중요)
-if [ -z "$FEED" ] || [ ! -d "$SRC_DIR" ] || [ ! -d "$NAS_DIR" ]; then
-  STATUS=5; SRC=-1; NAS=-1                                         # 확인 자체 실패 (인자 누락, 폴더 없음)
-else
-  SRC=$(size_of "$SRC_DIR/$FILE")
-  NAS=$(size_of "$NAS_DIR/$FILE")
-  if   [ "$SRC" -eq -1 ] && [ "$NAS" -eq -1 ];     then STATUS=3   # 원본부터 없음
-  elif [ "$NAS" -eq -1 ];                          then STATUS=2   # 원본은 있는데 적재 안 됨
-  elif [ "$SRC" -ne -1 ] && [ "$SRC" -ne "$NAS" ]; then STATUS=4   # 크기 다름 (덜 적재됨)
-  elif [ "$NAS" -eq 0 ];                           then STATUS=1   # 0바이트 (원본도 0바이트)
-  else                                                  STATUS=0   # 정상
+# ?
+if [ -z "$NAS_DIR" ] || [ -z "$FILE" ] || [ -z "$FEED" ] || ! command -v sha256sum >/dev/null 2>&1; then
+  STATUS=5 # CHECK_ERROR
+elif [ ! -f "$DATA" ]; then # 데이터 파일이 없다면 NOT_FOUND
+  STATUS=2 
+else # 데이터 파일이 있는경우
+  SIZE=$(wc -c < "$DATA" | tr -d ' ') # 원본 파일의 크기 정의
+  if [ ! -f "$SUM" ]; then # 체크썸 파일이 없다면 CHECKSUM_MISSING
+    STATUS=3 
+  else # SHA 비교 시작
+    EXPECTED=$(cut -d' ' -f1 "$SUM" | head -n 1) # .sha256 파일에서 해시 꺼냄
+    ACTUAL=$(sha256sum "$DATA" | cut -d' ' -f1) # 원본 파일의 해시를 계산
+    if [ ${#EXPECTED} -ne 64 ]; then STATUS=5      # 해시는 항상 64글자, 아니라면 CHECK_ERROR
+    elif [ "$EXPECTED" != "$ACTUAL" ]; then STATUS=4 # 두 해시가 다르면 CHECKSUM_MISMATCH
+    elif [ "$SIZE" -eq 0 ]; then STATUS=1 # 해시는 일치하지만 사이즈가 0이라면 EMPTY
+    else STATUS=0; fi
   fi
 fi
 
-# 상태값 → 이름 (콘솔에서 번호 대신 이름으로 바로 알 수 있게)
+# 숫자를 이름으로 바꿈
 case "$STATUS" in
-  0) NAME="OK" ;;
-  1) NAME="EMPTY" ;;
-  2) NAME="NAS_MISSING" ;;
-  3) NAME="SOURCE_MISSING" ;;
-  4) NAME="SIZE_MISMATCH" ;;
-  *) NAME="CHECK_ERROR" ;;
+  0) NAME="OK";; 1) NAME="EMPTY";; 2) NAME="NOT_FOUND";;
+  3) NAME="CHECKSUM_MISSING";; 4) NAME="CHECKSUM_MISMATCH";; *) NAME="CHECK_ERROR";;
 esac
 
-# 콘솔에 남기는 기록 (Jenkins Console Output에서 보임)
-echo "[NAS-CHECK] source file : $(show_size "$SRC")"
-echo "[NAS-CHECK] nas file    : $(show_size "$NAS")"
-echo "[NAS-CHECK] result      : $STATUS = $NAME"
+# 젠킨스 콘솔에 출력
+# 출력 예시
+# ===== [NAS-CHECK] start feed=demo-batch-run file=/data/nas-sim/inbound/20261118/CSTR_A_b11.csv =====
+# [NAS-CHECK] nas file : 818 bytes
+# [NAS-CHECK] expected : f0019428...361b
+# [NAS-CHECK] actual   : 3c9e...(잘린 파일의 해시)
+# [NAS-CHECK] result: 4 = CHECKSUM_MISMATCH (size=818)
+echo "[NAS-CHECK] nas file : $( [ "$SIZE" -eq -1 ] && echo "not found" || echo "$SIZE bytes" )"
+echo "[NAS-CHECK] expected : ${EXPECTED:-none}"
+echo "[NAS-CHECK] actual   : ${ACTUAL:-none}"
+echo "[NAS-CHECK] result: $STATUS = $NAME"
 
-# .prom 파일 쓰기: 임시 파일에 다 쓴 다음 mv로 한 번에 교체
-# (node exporter가 반쯤 쓰인 파일을 읽는 것을 막기 위함. 임시 파일은 끝이 .prom이 아니라 무시됨)
-OUT="$PROM_DIR/batch_file_$FEED.prom"
-TMP="$OUT.$$"
-cat > "$TMP" <<EOF
-# HELP batch_file_status 0=OK 1=EMPTY 2=NAS_MISSING 3=SOURCE_MISSING 4=SIZE_MISMATCH 5=CHECK_ERROR
+# .prom 파일 쓰기
+# .prom 파일은 임시 파일에 다 쓴 뒤 이름을 바꿈 (node_exporter가 반쯤 쓰인 파일을 읽지 않도록)
+if [ -n "$FEED" ] && [ -d "$PROM_DIR" ]; then
+  OUT="$PROM_DIR/batch_file_$FEED.prom"; TMP="$OUT.$$" # 파일의 최종 이름 ($$=지금 실행 중인 프로세스 번호)
+  cat > "$TMP" <<PROM # 두 PROM 사이의 내용을 임시 파일에 씀
+# HELP batch_file_status 0=OK 1=EMPTY 2=NOT_FOUND 3=CHECKSUM_MISSING 4=CHECKSUM_MISMATCH 5=CHECK_ERROR
 # TYPE batch_file_status gauge
 batch_file_status{feed="$FEED"} $STATUS
-# HELP batch_file_size_bytes file size in bytes, -1 means not found
+# HELP batch_file_size_bytes nas file size in bytes, -1 means not found
 # TYPE batch_file_size_bytes gauge
-batch_file_size_bytes{feed="$FEED",location="source"} $SRC
-batch_file_size_bytes{feed="$FEED",location="nas"} $NAS
-EOF
-mv "$TMP" "$OUT"
+batch_file_size_bytes{feed="$FEED"} $SIZE
+PROM
+  mv "$TMP" "$OUT" # 다 쓴 임시파일의 이름을 최종 이름으로 바꿈
+else
+  echo "[NAS-CHECK] skip .prom (no feed or no dir: $PROM_DIR)" 
+fi
 
-# Jenkins용 종료 코드
-case "$STATUS" in
-  0) exit 0 ;;
-  1) exit 10 ;;
-  *) exit 20 ;;
-esac
+exit 0
