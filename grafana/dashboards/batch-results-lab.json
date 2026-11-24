@@ -637,7 +637,7 @@
         "kind": "Panel",
         "spec": {
           "id": 4,
-          "title": "문제 발생 흐름 (최대 500회)",
+          "title": "문제 발생 흐름 (최근 7일, 최대 500회)",
           "description": "",
           "links": [],
           "data": {
