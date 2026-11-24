@@ -5,8 +5,8 @@
     "name": "adh2ghr",
     "namespace": "default",
     "uid": "49678713-9276-448e-b938-899b0599924f",
-    "resourceVersion": "1795484142126006",
-    "generation": 36,
+    "resourceVersion": "1795497214678998",
+    "generation": 40,
     "creationTimestamp": "2026-11-19T06:04:51Z",
     "labels": {
       "grafana.app/deprecatedInternalID": "2101002822160384"
@@ -15,7 +15,7 @@
       "grafana.app/createdBy": "user:cg4gemfcjaccga",
       "grafana.app/saved-from-ui": "Grafana v13.3.1 (da3aa3ff57)",
       "grafana.app/updatedBy": "user:cg4gemfcjaccga",
-      "grafana.app/updatedTimestamp": "2026-11-24T01:35:42Z"
+      "grafana.app/updatedTimestamp": "2026-11-24T05:13:34Z"
     }
   },
   "spec": {
@@ -83,7 +83,7 @@
                           },
                           {
                             "selector": "result",
-                            "text": " Jenkins",
+                            "text": "Jenkins",
                             "type": "string"
                           },
                           {
@@ -130,7 +130,7 @@
                       "excludeByName": {},
                       "includeByName": {},
                       "indexByName": {
-                        " Jenkins": 3,
+                        "Jenkins": 3,
                         "배치": 4,
                         "빌드": 0,
                         "소요": 6,
@@ -511,6 +511,7 @@
                                 "text": "사용자 중단"
                               },
                               "BATCH_ABANDONED": {
+                                "color": "orange",
                                 "index": 4,
                                 "text": "배치 포기"
                               },
@@ -525,6 +526,7 @@
                                 "text": "배치 중단"
                               },
                               "BATCH_UNKNOWN": {
+                                "color": "orange",
                                 "index": 5,
                                 "text": "배치 상태 불명"
                               },
@@ -614,7 +616,7 @@
                           },
                           {
                             "targetBlank": true,
-                            "title": "마지막 로그 보",
+                            "title": "마지막 로그 보기",
                             "url": "${jenkins_url}/job/${__value.raw}/lastCompletedBuild/console"
                           }
                         ]
@@ -915,7 +917,7 @@
       "timezone": "browser",
       "from": "now-15m",
       "to": "now",
-      "autoRefresh": "30s",
+      "autoRefresh": "5m",
       "autoRefreshIntervals": [
         "5s",
         "10s",
