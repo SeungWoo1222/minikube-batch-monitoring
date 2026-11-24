@@ -5,8 +5,8 @@
     "name": "adh2ghr",
     "namespace": "default",
     "uid": "49678713-9276-448e-b938-899b0599924f",
-    "resourceVersion": "1795497214678998",
-    "generation": 40,
+    "resourceVersion": "1795507796279016",
+    "generation": 45,
     "creationTimestamp": "2026-11-19T06:04:51Z",
     "labels": {
       "grafana.app/deprecatedInternalID": "2101002822160384"
@@ -15,7 +15,7 @@
       "grafana.app/createdBy": "user:cg4gemfcjaccga",
       "grafana.app/saved-from-ui": "Grafana v13.3.1 (da3aa3ff57)",
       "grafana.app/updatedBy": "user:cg4gemfcjaccga",
-      "grafana.app/updatedTimestamp": "2026-11-24T05:13:34Z"
+      "grafana.app/updatedTimestamp": "2026-11-24T08:09:56Z"
     }
   },
   "spec": {
@@ -62,7 +62,7 @@
                       "group": "yesoreyeram-infinity-datasource",
                       "version": "v0",
                       "datasource": {
-                        "name": "bg4jzo9zz35z4f"
+                        "name": "${ds}"
                       },
                       "spec": {
                         "columns": [
@@ -109,7 +109,7 @@
                         "root_selector": "(\n  $sel := \"${bno}\" = \"\" ? allBuilds : allBuilds[number <= $number(\"${bno}\")];\n  $sel.(\n    $d := description ? description : \"\";\n    $batch := $contains($d, \"batch=\") ? $substringBefore($substringAfter($d, \"batch=\"), \" \") : \"\";\n    $file := $contains($d, \"file=\") ? $substringAfter($d, \"file=\") : \"\";\n    {\n      \"build\": number,\n      \"start\": timestamp,\n      \"verdict\":\n        result = null ? \"RUNNING\" :\n        result = \"ABORTED\" ? \"ABORTED\" :\n        result != \"SUCCESS\" ? \"EXIT_FAIL\" :\n        $d = \"\" ? \"NO_INFO\" :\n        $batch in [\"STOPPED\", \"FAILED\", \"ABANDONED\", \"UNKNOWN\"] ? \"BATCH_\" & $batch :\n        $file in [\"CHECKSUM_MISMATCH\", \"CHECKSUM_MISSING\", \"CHECK_ERROR\"] ? $file :\n        $file = \"EMPTY\" ? \"EMPTY\" :\n        $file = \"NOT_FOUND\" ? \"NO_FILE\" :\n        $file = \"OK\" ? \"OK\" : \"UNKNOWN\",\n      \"result\": result,\n      \"batch\": $batch,\n      \"file\": $file,\n      \"duration\": duration\n    }\n  )\n)",
                         "source": "url",
                         "type": "json",
-                        "url": "http://jenkins.jenkins.svc.cluster.local:8080/job/${job}/api/json?tree=allBuilds[number,result,timestamp,duration,description]{0,1000}",
+                        "url": "${jenkins_api}/job/${job}/api/json?tree=allBuilds[number,result,timestamp,duration,description]{0,1000}",
                         "url_options": {
                           "data": "",
                           "method": "GET"
@@ -359,7 +359,7 @@
                       "group": "yesoreyeram-infinity-datasource",
                       "version": "v0",
                       "datasource": {
-                        "name": "bg4jzo9zz35z4f"
+                        "name": "${ds}"
                       },
                       "spec": {
                         "columns": [
@@ -396,7 +396,7 @@
                         "root_selector": "jobs.(\n  $nm := name;\n  $b := lastCompletedBuild;\n  $d := $b.description ? $b.description : \"\";\n  $batch := $contains($d, \"batch=\") ? $substringBefore($substringAfter($d, \"batch=\"), \" \") : \"\";\n  $file := $contains($d, \"file=\") ? $substringAfter($d, \"file=\") : \"\";\n  {\n    \"job\": $nm,\n    \"build\": $b.number,\n    \"start\": $b.timestamp,\n    \"ago\": $b.timestamp,\n    \"verdict\":\n      $exists($b.number) = false ? \"NO_BUILD\" :\n      $b.result = \"ABORTED\" ? \"ABORTED\" :\n      $b.result != \"SUCCESS\" ? \"EXIT_FAIL\" :\n      $d = \"\" ? \"NO_INFO\" :\n      $batch in [\"STOPPED\", \"FAILED\", \"ABANDONED\", \"UNKNOWN\"] ? \"BATCH_\" & $batch :\n      $file in [\"CHECKSUM_MISMATCH\", \"CHECKSUM_MISSING\", \"CHECK_ERROR\"] ? $file :\n      $file = \"EMPTY\" ? \"EMPTY\" :\n      $file = \"NOT_FOUND\" ? \"NO_FILE\" :\n      $file = \"OK\" ? \"OK\" : \"UNKNOWN\"\n  }\n)",
                         "source": "url",
                         "type": "json",
-                        "url": "http://jenkins.jenkins.svc.cluster.local:8080/view/batch-monitor/api/json?tree=jobs[name,lastCompletedBuild[number,result,timestamp,duration,description]]",
+                        "url": "${jenkins_api}/view/${view}/api/json?tree=jobs[name,lastCompletedBuild[number,result,timestamp,duration,description]]",
                         "url_options": {
                           "data": "",
                           "method": "GET"
@@ -652,7 +652,7 @@
                       "group": "yesoreyeram-infinity-datasource",
                       "version": "v0",
                       "datasource": {
-                        "name": "bg4jzo9zz35z4f"
+                        "name": "${ds}"
                       },
                       "spec": {
                         "columns": [
@@ -684,7 +684,7 @@
                         "root_selector": "(\n  $rows := jobs.(\n    $nm := name;\n    allBuilds.(\n      $d := description ? description : \"\";\n      $batch := $contains($d, \"batch=\") ? $substringBefore($substringAfter($d, \"batch=\"), \" \") : \"\";\n      $file := $contains($d, \"file=\") ? $substringAfter($d, \"file=\") : \"\";\n      {\n        \"job\": $nm,\n        \"start\": timestamp,\n        \"build\": number,\n        \"verdict\":\n          result = null ? \"RUNNING\" :\n          result = \"ABORTED\" ? \"ABORTED\" :\n          result != \"SUCCESS\" ? \"EXIT_FAIL\" :\n          $d = \"\" ? \"NO_INFO\" :\n          $batch in [\"STOPPED\", \"FAILED\", \"ABANDONED\", \"UNKNOWN\"] ? \"BATCH_\" & $batch :\n          $file in [\"CHECKSUM_MISMATCH\", \"CHECKSUM_MISSING\", \"CHECK_ERROR\"] ? $file :\n          $file = \"EMPTY\" ? \"EMPTY\" :\n          $file = \"NOT_FOUND\" ? \"NO_FILE\" :\n          $file = \"OK\" ? \"OK\" : \"UNKNOWN\"\n      }\n    )\n  );\n  $weekago := $millis() - 7 * 86400000;\n  $prob := $rows[verdict in [\"EXIT_FAIL\", \"BATCH_FAILED\", \"BATCH_STOPPED\", \"BATCH_ABANDONED\", \"BATCH_UNKNOWN\", \"CHECKSUM_MISMATCH\", \"CHECKSUM_MISSING\", \"CHECK_ERROR\", \"EMPTY\", \"UNKNOWN\"]][start >= $weekago];\n  $o := jobs.( $count(allBuilds) >= 300 ? $min(allBuilds.timestamp) : 0 );\n  $since := $max($append([0], $o));\n  $oneday := 86400000;\n  $kst := 32400000;\n  $base := $since > 0 ? $since : $min($rows.start);\n  $first := $base > $weekago ? $base : $weekago;\n  $d0 := $floor(($first + $kst) / $oneday) + 1;\n  $d1 := $floor(($millis() + $kst) / $oneday);\n  $marks := $d0 <= $d1 ? [$d0..$d1].(\n    $k := $;\n    $gap := $d1 - $k + 1;\n    {\n      \"job\": \"\",\n      \"build\": 0,\n      \"start\": $k * $oneday - $kst,\n      \"verdict\": $gap = 1 ? \"어제\" : $gap = 2 ? \"그제\" : $substring($fromMillis(($k - 1) * $oneday), 5, 5)\n    }\n  ) : [];\n  $append($prob, $marks)\n)",
                         "source": "url",
                         "type": "json",
-                        "url": "http://jenkins.jenkins.svc.cluster.local:8080/view/batch-monitor/api/json?tree=jobs[name,allBuilds[number,result,timestamp,duration,description]{0,300}]",
+                        "url": "${jenkins_api}/view/${view}/api/json?tree=jobs[name,allBuilds[number,result,timestamp,duration,description]{0,300}]",
                         "url_options": {
                           "data": "",
                           "method": "GET"
@@ -936,6 +936,26 @@
     "title": "Batch Results (Lab)",
     "variables": [
       {
+        "kind": "DatasourceVariable",
+        "spec": {
+          "name": "ds",
+          "pluginId": "yesoreyeram-infinity-datasource",
+          "refresh": "onDashboardLoad",
+          "regex": "",
+          "current": {
+            "text": "yesoreyeram-infinity-datasource",
+            "value": "bg4jzo9zz35z4f"
+          },
+          "options": [],
+          "multi": false,
+          "includeAll": false,
+          "label": "데이터소스",
+          "hide": "hideVariable",
+          "skipUrlSync": false,
+          "allowCustomValue": true
+        }
+      },
+      {
         "kind": "QueryVariable",
         "spec": {
           "name": "job",
@@ -952,7 +972,7 @@
             "group": "yesoreyeram-infinity-datasource",
             "version": "v0",
             "datasource": {
-              "name": "bg4jzo9zz35z4f"
+              "name": "${ds}"
             },
             "spec": {
               "infinityQuery": {
@@ -972,7 +992,7 @@
                 "root_selector": "jobs",
                 "source": "url",
                 "type": "json",
-                "url": "http://jenkins.jenkins.svc.cluster.local:8080/view/batch-monitor/api/json?tree=jobs[name]",
+                "url": "${jenkins_api}/view/${view}/api/json?tree=jobs[name]",
                 "url_options": {
                   "data": "",
                   "method": "GET"
@@ -993,6 +1013,20 @@
         }
       },
       {
+        "kind": "TextVariable",
+        "spec": {
+          "name": "bno",
+          "current": {
+            "text": "",
+            "value": ""
+          },
+          "query": "",
+          "label": "기준 빌드",
+          "hide": "dontHide",
+          "skipUrlSync": false
+        }
+      },
+      {
         "kind": "ConstantVariable",
         "spec": {
           "name": "jenkins_url",
@@ -1006,17 +1040,29 @@
         }
       },
       {
-        "kind": "TextVariable",
+        "kind": "ConstantVariable",
         "spec": {
-          "name": "bno",
+          "name": "jenkins_api",
+          "query": "http://jenkins.jenkins.svc.cluster.local:8080",
           "current": {
-            "text": "",
-            "value": ""
+            "text": "http://jenkins.jenkins.svc.cluster.local:8080",
+            "value": "http://jenkins.jenkins.svc.cluster.local:8080"
           },
-          "query": "",
-          "label": "기준 빌드",
-          "hide": "dontHide",
-          "skipUrlSync": false
+          "hide": "hideVariable",
+          "skipUrlSync": true
+        }
+      },
+      {
+        "kind": "ConstantVariable",
+        "spec": {
+          "name": "view",
+          "query": "batch-monitor",
+          "current": {
+            "text": "batch-monitor",
+            "value": "batch-monitor"
+          },
+          "hide": "hideVariable",
+          "skipUrlSync": true
         }
       }
     ],
