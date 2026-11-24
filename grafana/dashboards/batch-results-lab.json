@@ -1,0 +1,1033 @@
+{
+  "apiVersion": "dashboard.grafana.app/v2",
+  "kind": "Dashboard",
+  "metadata": {
+    "name": "adh2ghr",
+    "namespace": "default",
+    "uid": "49678713-9276-448e-b938-899b0599924f",
+    "resourceVersion": "1795484142126006",
+    "generation": 36,
+    "creationTimestamp": "2026-11-19T06:04:51Z",
+    "labels": {
+      "grafana.app/deprecatedInternalID": "2101002822160384"
+    },
+    "annotations": {
+      "grafana.app/createdBy": "user:cg4gemfcjaccga",
+      "grafana.app/saved-from-ui": "Grafana v13.3.1 (da3aa3ff57)",
+      "grafana.app/updatedBy": "user:cg4gemfcjaccga",
+      "grafana.app/updatedTimestamp": "2026-11-24T01:35:42Z"
+    }
+  },
+  "spec": {
+    "annotations": [
+      {
+        "kind": "AnnotationQuery",
+        "spec": {
+          "query": {
+            "kind": "DataQuery",
+            "group": "grafana",
+            "version": "v0",
+            "datasource": {
+              "name": "-- Grafana --"
+            },
+            "spec": {}
+          },
+          "enable": true,
+          "hide": true,
+          "iconColor": "rgba(0, 211, 255, 1)",
+          "name": "Annotations & Alerts",
+          "builtIn": true
+        }
+      }
+    ],
+    "cursorSync": "Off",
+    "editable": true,
+    "elements": {
+      "panel-1": {
+        "kind": "Panel",
+        "spec": {
+          "id": 1,
+          "title": "${job} 실행 이력",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "yesoreyeram-infinity-datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "bg4jzo9zz35z4f"
+                      },
+                      "spec": {
+                        "columns": [
+                          {
+                            "selector": "build",
+                            "text": "빌드",
+                            "type": "number"
+                          },
+                          {
+                            "selector": "start",
+                            "text": "시작",
+                            "type": "timestamp_epoch"
+                          },
+                          {
+                            "selector": "verdict",
+                            "text": "판정",
+                            "type": "string"
+                          },
+                          {
+                            "selector": "result",
+                            "text": " Jenkins",
+                            "type": "string"
+                          },
+                          {
+                            "selector": "batch",
+                            "text": "배치",
+                            "type": "string"
+                          },
+                          {
+                            "selector": "file",
+                            "text": "파일",
+                            "type": "string"
+                          },
+                          {
+                            "selector": "duration",
+                            "text": "소요",
+                            "type": "number"
+                          }
+                        ],
+                        "filters": [],
+                        "format": "table",
+                        "global_query_id": "",
+                        "parser": "backend",
+                        "root_selector": "(\n  $sel := \"${bno}\" = \"\" ? allBuilds : allBuilds[number <= $number(\"${bno}\")];\n  $sel.(\n    $d := description ? description : \"\";\n    $batch := $contains($d, \"batch=\") ? $substringBefore($substringAfter($d, \"batch=\"), \" \") : \"\";\n    $file := $contains($d, \"file=\") ? $substringAfter($d, \"file=\") : \"\";\n    {\n      \"build\": number,\n      \"start\": timestamp,\n      \"verdict\":\n        result = null ? \"RUNNING\" :\n        result = \"ABORTED\" ? \"ABORTED\" :\n        result != \"SUCCESS\" ? \"EXIT_FAIL\" :\n        $d = \"\" ? \"NO_INFO\" :\n        $batch in [\"STOPPED\", \"FAILED\", \"ABANDONED\", \"UNKNOWN\"] ? \"BATCH_\" & $batch :\n        $file in [\"CHECKSUM_MISMATCH\", \"CHECKSUM_MISSING\", \"CHECK_ERROR\"] ? $file :\n        $file = \"EMPTY\" ? \"EMPTY\" :\n        $file = \"NOT_FOUND\" ? \"NO_FILE\" :\n        $file = \"OK\" ? \"OK\" : \"UNKNOWN\",\n      \"result\": result,\n      \"batch\": $batch,\n      \"file\": $file,\n      \"duration\": duration\n    }\n  )\n)",
+                        "source": "url",
+                        "type": "json",
+                        "url": "http://jenkins.jenkins.svc.cluster.local:8080/job/${job}/api/json?tree=allBuilds[number,result,timestamp,duration,description]{0,1000}",
+                        "url_options": {
+                          "data": "",
+                          "method": "GET"
+                        }
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [
+                {
+                  "kind": "Transformation",
+                  "group": "organize",
+                  "spec": {
+                    "options": {
+                      "excludeByName": {},
+                      "includeByName": {},
+                      "indexByName": {
+                        " Jenkins": 3,
+                        "배치": 4,
+                        "빌드": 0,
+                        "소요": 6,
+                        "시작": 1,
+                        "파일": 5,
+                        "판정": 2
+                      },
+                      "renameByName": {}
+                    }
+                  }
+                }
+              ],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "table",
+            "version": "13.3.1",
+            "spec": {
+              "options": {
+                "cellHeight": "sm",
+                "enablePagination": false,
+                "showHeader": true,
+                "sortBy": [],
+                "zebraStriping": false
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "green"
+                      },
+                      {
+                        "value": 80,
+                        "color": "red"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "thresholds"
+                  },
+                  "custom": {
+                    "align": "auto",
+                    "cellOptions": {
+                      "type": "auto"
+                    },
+                    "filterable": false,
+                    "footer": {
+                      "reducers": []
+                    },
+                    "inspect": false
+                  }
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "scope": "series",
+                      "options": "판정"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.cellOptions",
+                        "value": {
+                          "type": "color-background"
+                        }
+                      },
+                      {
+                        "id": "mappings",
+                        "value": [
+                          {
+                            "options": {
+                              "ABORTED": {
+                                "color": "#808080",
+                                "index": 12,
+                                "text": "사용자 중단"
+                              },
+                              "BATCH_ABANDONED": {
+                                "color": "orange",
+                                "index": 4,
+                                "text": "배치 포기"
+                              },
+                              "BATCH_FAILED": {
+                                "color": "orange",
+                                "index": 3,
+                                "text": "배치 실패"
+                              },
+                              "BATCH_STOPPED": {
+                                "color": "orange",
+                                "index": 2,
+                                "text": "배치 중단"
+                              },
+                              "BATCH_UNKNOWN": {
+                                "color": "orange",
+                                "index": 5,
+                                "text": "배치 상태 불명"
+                              },
+                              "CHECKSUM_MISMATCH": {
+                                "color": "red",
+                                "index": 6,
+                                "text": "파일 손상"
+                              },
+                              "CHECKSUM_MISSING": {
+                                "color": "red",
+                                "index": 7,
+                                "text": "체크섬 없음"
+                              },
+                              "CHECK_ERROR": {
+                                "color": "red",
+                                "index": 8,
+                                "text": "검사 오류"
+                              },
+                              "EMPTY": {
+                                "color": "orange",
+                                "index": 1,
+                                "text": "빈 파일"
+                              },
+                              "EXIT_FAIL": {
+                                "color": "red",
+                                "index": 9,
+                                "text": "비정상 종료"
+                              },
+                              "NO_FILE": {
+                                "color": "#808080",
+                                "index": 10,
+                                "text": "받을 파일 없음"
+                              },
+                              "NO_INFO": {
+                                "color": "#808080",
+                                "index": 11,
+                                "text": "정보 없음"
+                              },
+                              "OK": {
+                                "color": "green",
+                                "index": 0,
+                                "text": "정상"
+                              },
+                              "RUNNING": {
+                                "color": "blue",
+                                "index": 13,
+                                "text": "실행 중"
+                              },
+                              "UNKNOWN": {
+                                "color": "purple",
+                                "index": 14,
+                                "text": "판정 불가"
+                              }
+                            },
+                            "type": "value"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "scope": "series",
+                      "options": "소요"
+                    },
+                    "properties": [
+                      {
+                        "id": "unit",
+                        "value": "ms"
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "scope": "series",
+                      "options": "빌드"
+                    },
+                    "properties": [
+                      {
+                        "id": "links",
+                        "value": [
+                          {
+                            "targetBlank": true,
+                            "title": "로그 보기",
+                            "url": "${jenkins_url}/job/${job}/${__value.raw}/console"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byRegexp",
+                      "scope": "series",
+                      "options": "판정|Jenkins|배치|파일"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.filterable",
+                        "value": true
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "panel-2": {
+        "kind": "Panel",
+        "spec": {
+          "id": 2,
+          "title": "작업별 마지막 실행",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "yesoreyeram-infinity-datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "bg4jzo9zz35z4f"
+                      },
+                      "spec": {
+                        "columns": [
+                          {
+                            "selector": "job",
+                            "text": "작업",
+                            "type": "string"
+                          },
+                          {
+                            "selector": "verdict",
+                            "text": "판정",
+                            "type": "string"
+                          },
+                          {
+                            "selector": "start",
+                            "text": "마지막 실행",
+                            "type": "timestamp_epoch"
+                          },
+                          {
+                            "selector": "ago",
+                            "text": "경과",
+                            "type": "number"
+                          },
+                          {
+                            "selector": "build",
+                            "text": "빌드",
+                            "type": "number"
+                          }
+                        ],
+                        "filters": [],
+                        "format": "table",
+                        "global_query_id": "",
+                        "parser": "backend",
+                        "root_selector": "jobs.(\n  $nm := name;\n  $b := lastCompletedBuild;\n  $d := $b.description ? $b.description : \"\";\n  $batch := $contains($d, \"batch=\") ? $substringBefore($substringAfter($d, \"batch=\"), \" \") : \"\";\n  $file := $contains($d, \"file=\") ? $substringAfter($d, \"file=\") : \"\";\n  {\n    \"job\": $nm,\n    \"build\": $b.number,\n    \"start\": $b.timestamp,\n    \"ago\": $b.timestamp,\n    \"verdict\":\n      $exists($b.number) = false ? \"NO_BUILD\" :\n      $b.result = \"ABORTED\" ? \"ABORTED\" :\n      $b.result != \"SUCCESS\" ? \"EXIT_FAIL\" :\n      $d = \"\" ? \"NO_INFO\" :\n      $batch in [\"STOPPED\", \"FAILED\", \"ABANDONED\", \"UNKNOWN\"] ? \"BATCH_\" & $batch :\n      $file in [\"CHECKSUM_MISMATCH\", \"CHECKSUM_MISSING\", \"CHECK_ERROR\"] ? $file :\n      $file = \"EMPTY\" ? \"EMPTY\" :\n      $file = \"NOT_FOUND\" ? \"NO_FILE\" :\n      $file = \"OK\" ? \"OK\" : \"UNKNOWN\"\n  }\n)",
+                        "source": "url",
+                        "type": "json",
+                        "url": "http://jenkins.jenkins.svc.cluster.local:8080/view/batch-monitor/api/json?tree=jobs[name,lastCompletedBuild[number,result,timestamp,duration,description]]",
+                        "url_options": {
+                          "data": "",
+                          "method": "GET"
+                        }
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [
+                {
+                  "kind": "Transformation",
+                  "group": "sortBy",
+                  "spec": {
+                    "options": {
+                      "fields": {},
+                      "sort": [
+                        {
+                          "desc": false,
+                          "field": "마지막 실행"
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "kind": "Transformation",
+                  "group": "organize",
+                  "spec": {
+                    "options": {
+                      "excludeByName": {},
+                      "includeByName": {},
+                      "indexByName": {
+                        "경과": 3,
+                        "마지막 실행": 2,
+                        "빌드": 4,
+                        "작업": 0,
+                        "판정": 1
+                      },
+                      "renameByName": {}
+                    }
+                  }
+                }
+              ],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "table",
+            "version": "13.3.1",
+            "spec": {
+              "options": {
+                "cellHeight": "sm",
+                "showHeader": true,
+                "sortBy": [],
+                "zebraStriping": false
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "green"
+                      },
+                      {
+                        "value": 80,
+                        "color": "red"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "thresholds"
+                  },
+                  "custom": {
+                    "align": "auto",
+                    "cellOptions": {
+                      "type": "auto"
+                    },
+                    "footer": {
+                      "reducers": []
+                    },
+                    "inspect": false
+                  }
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "scope": "series",
+                      "options": "판정"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.cellOptions",
+                        "value": {
+                          "type": "color-background"
+                        }
+                      },
+                      {
+                        "id": "mappings",
+                        "value": [
+                          {
+                            "options": {
+                              "ABORTED": {
+                                "color": "#808080",
+                                "index": 12,
+                                "text": "사용자 중단"
+                              },
+                              "BATCH_ABANDONED": {
+                                "index": 4,
+                                "text": "배치 포기"
+                              },
+                              "BATCH_FAILED": {
+                                "color": "orange",
+                                "index": 3,
+                                "text": "배치 실패"
+                              },
+                              "BATCH_STOPPED": {
+                                "color": "orange",
+                                "index": 2,
+                                "text": "배치 중단"
+                              },
+                              "BATCH_UNKNOWN": {
+                                "index": 5,
+                                "text": "배치 상태 불명"
+                              },
+                              "CHECKSUM_MISMATCH": {
+                                "color": "red",
+                                "index": 6,
+                                "text": "파일 손상"
+                              },
+                              "CHECKSUM_MISSING": {
+                                "color": "red",
+                                "index": 7,
+                                "text": "체크섬 없음"
+                              },
+                              "CHECK_ERROR": {
+                                "color": "red",
+                                "index": 8,
+                                "text": "검사 오류"
+                              },
+                              "EMPTY": {
+                                "color": "orange",
+                                "index": 1,
+                                "text": "빈 파일"
+                              },
+                              "EXIT_FAIL": {
+                                "color": "red",
+                                "index": 9,
+                                "text": "비정상 종료"
+                              },
+                              "NO_BUILD": {
+                                "color": "#808080",
+                                "index": 14,
+                                "text": "실행 기록 없음"
+                              },
+                              "NO_FILE": {
+                                "color": "#808080",
+                                "index": 10,
+                                "text": "받을 파일 없음"
+                              },
+                              "NO_INFO": {
+                                "color": "#808080",
+                                "index": 11,
+                                "text": "정보 없음"
+                              },
+                              "OK": {
+                                "color": "green",
+                                "index": 0,
+                                "text": "정상"
+                              },
+                              "UNKNOWN": {
+                                "color": "purple",
+                                "index": 13,
+                                "text": "판정 불가"
+                              }
+                            },
+                            "type": "value"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "scope": "series",
+                      "options": "경과"
+                    },
+                    "properties": [
+                      {
+                        "id": "unit",
+                        "value": "dateTimeFromNow"
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "scope": "series",
+                      "options": "작업"
+                    },
+                    "properties": [
+                      {
+                        "id": "links",
+                        "value": [
+                          {
+                            "title": "실행 이력 보기",
+                            "url": "/d/adh2ghr/batch-results-lab?var-job=${__value.raw}&var-bno="
+                          },
+                          {
+                            "targetBlank": true,
+                            "title": "마지막 로그 보",
+                            "url": "${jenkins_url}/job/${__value.raw}/lastCompletedBuild/console"
+                          }
+                        ]
+                      },
+                      {
+                        "id": "custom.width",
+                        "value": 206
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "panel-4": {
+        "kind": "Panel",
+        "spec": {
+          "id": 4,
+          "title": "문제 발생 흐름 (최대 500회)",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "yesoreyeram-infinity-datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "bg4jzo9zz35z4f"
+                      },
+                      "spec": {
+                        "columns": [
+                          {
+                            "selector": "job",
+                            "text": "job",
+                            "type": "string"
+                          },
+                          {
+                            "selector": "start",
+                            "text": "start",
+                            "type": "timestamp_epoch"
+                          },
+                          {
+                            "selector": "verdict",
+                            "text": "verdict",
+                            "type": "string"
+                          },
+                          {
+                            "selector": "build",
+                            "text": "build",
+                            "type": "number"
+                          }
+                        ],
+                        "filters": [],
+                        "format": "table",
+                        "global_query_id": "",
+                        "parser": "backend",
+                        "root_selector": "(\n  $rows := jobs.(\n    $nm := name;\n    allBuilds.(\n      $d := description ? description : \"\";\n      $batch := $contains($d, \"batch=\") ? $substringBefore($substringAfter($d, \"batch=\"), \" \") : \"\";\n      $file := $contains($d, \"file=\") ? $substringAfter($d, \"file=\") : \"\";\n      {\n        \"job\": $nm,\n        \"start\": timestamp,\n        \"build\": number,\n        \"verdict\":\n          result = null ? \"RUNNING\" :\n          result = \"ABORTED\" ? \"ABORTED\" :\n          result != \"SUCCESS\" ? \"EXIT_FAIL\" :\n          $d = \"\" ? \"NO_INFO\" :\n          $batch in [\"STOPPED\", \"FAILED\", \"ABANDONED\", \"UNKNOWN\"] ? \"BATCH_\" & $batch :\n          $file in [\"CHECKSUM_MISMATCH\", \"CHECKSUM_MISSING\", \"CHECK_ERROR\"] ? $file :\n          $file = \"EMPTY\" ? \"EMPTY\" :\n          $file = \"NOT_FOUND\" ? \"NO_FILE\" :\n          $file = \"OK\" ? \"OK\" : \"UNKNOWN\"\n      }\n    )\n  );\n  $weekago := $millis() - 7 * 86400000;\n  $prob := $rows[verdict in [\"EXIT_FAIL\", \"BATCH_FAILED\", \"BATCH_STOPPED\", \"BATCH_ABANDONED\", \"BATCH_UNKNOWN\", \"CHECKSUM_MISMATCH\", \"CHECKSUM_MISSING\", \"CHECK_ERROR\", \"EMPTY\", \"UNKNOWN\"]][start >= $weekago];\n  $o := jobs.( $count(allBuilds) >= 300 ? $min(allBuilds.timestamp) : 0 );\n  $since := $max($append([0], $o));\n  $oneday := 86400000;\n  $kst := 32400000;\n  $base := $since > 0 ? $since : $min($rows.start);\n  $first := $base > $weekago ? $base : $weekago;\n  $d0 := $floor(($first + $kst) / $oneday) + 1;\n  $d1 := $floor(($millis() + $kst) / $oneday);\n  $marks := $d0 <= $d1 ? [$d0..$d1].(\n    $k := $;\n    $gap := $d1 - $k + 1;\n    {\n      \"job\": \"\",\n      \"build\": 0,\n      \"start\": $k * $oneday - $kst,\n      \"verdict\": $gap = 1 ? \"어제\" : $gap = 2 ? \"그제\" : $substring($fromMillis(($k - 1) * $oneday), 5, 5)\n    }\n  ) : [];\n  $append($prob, $marks)\n)",
+                        "source": "url",
+                        "type": "json",
+                        "url": "http://jenkins.jenkins.svc.cluster.local:8080/view/batch-monitor/api/json?tree=jobs[name,allBuilds[number,result,timestamp,duration,description]{0,300}]",
+                        "url_options": {
+                          "data": "",
+                          "method": "GET"
+                        }
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [
+                {
+                  "kind": "Transformation",
+                  "group": "sortBy",
+                  "spec": {
+                    "options": {
+                      "fields": {},
+                      "sort": [
+                        {
+                          "desc": true,
+                          "field": "start"
+                        }
+                      ]
+                    }
+                  }
+                }
+              ],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "stat",
+            "version": "13.3.1",
+            "spec": {
+              "options": {
+                "colorMode": "background",
+                "graphMode": "area",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "percentChangeColorMode": "standard",
+                "reduceOptions": {
+                  "calcs": [
+                    "lastNotNull"
+                  ],
+                  "fields": "/^verdict$/",
+                  "limit": 520,
+                  "values": true
+                },
+                "showPercentChange": false,
+                "text": {
+                  "valueSize": 8
+                },
+                "textMode": "value",
+                "wideLayout": true
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "mappings": [
+                    {
+                      "type": "value",
+                      "options": {
+                        "ABORTED": {
+                          "text": "사용자 중단",
+                          "color": "#808080",
+                          "index": 12
+                        },
+                        "BATCH_ABANDONED": {
+                          "text": "​",
+                          "color": "orange",
+                          "index": 4
+                        },
+                        "BATCH_FAILED": {
+                          "text": "​",
+                          "color": "orange",
+                          "index": 3
+                        },
+                        "BATCH_STOPPED": {
+                          "text": "​",
+                          "color": "orange",
+                          "index": 2
+                        },
+                        "BATCH_UNKNOWN": {
+                          "text": "​",
+                          "color": "orange",
+                          "index": 5
+                        },
+                        "CHECKSUM_MISMATCH": {
+                          "text": "​",
+                          "color": "red",
+                          "index": 6
+                        },
+                        "CHECKSUM_MISSING": {
+                          "text": "​",
+                          "color": "red",
+                          "index": 7
+                        },
+                        "CHECK_ERROR": {
+                          "text": "​",
+                          "color": "red",
+                          "index": 8
+                        },
+                        "EMPTY": {
+                          "text": "​",
+                          "color": "orange",
+                          "index": 1
+                        },
+                        "EXIT_FAIL": {
+                          "text": "​",
+                          "color": "red",
+                          "index": 9
+                        },
+                        "NO_FILE": {
+                          "text": "받을 파일 없음",
+                          "color": "#808080",
+                          "index": 10
+                        },
+                        "NO_INFO": {
+                          "text": "정보 없음",
+                          "color": "#808080",
+                          "index": 11
+                        },
+                        "OK": {
+                          "text": "정상",
+                          "color": "green",
+                          "index": 0
+                        },
+                        "RUNNING": {
+                          "text": "실행 중",
+                          "color": "blue",
+                          "index": 13
+                        },
+                        "UNKNOWN": {
+                          "text": "​",
+                          "color": "purple",
+                          "index": 14
+                        }
+                      }
+                    },
+                    {
+                      "type": "regex",
+                      "options": {
+                        "pattern": "^(어제|그제|\\d\\d-\\d\\d)$",
+                        "result": {
+                          "color": "transparent",
+                          "index": 15
+                        }
+                      }
+                    }
+                  ],
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "red"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "thresholds",
+                    "fixedColor": "#ad46ff"
+                  },
+                  "links": [
+                    {
+                      "title": "${__data.fields.job} #${__data.fields.build} 이력 보기",
+                      "url": "/d/adh2ghr/batch-results-lab?var-job=${__data.fields.job}&var-bno=${__data.fields.build}"
+                    }
+                  ]
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      }
+    },
+    "layout": {
+      "kind": "GridLayout",
+      "spec": {
+        "items": [
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 0,
+              "width": 13,
+              "height": 10,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-2"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 13,
+              "y": 0,
+              "width": 11,
+              "height": 10,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-4"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 10,
+              "width": 24,
+              "height": 10,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-1"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "links": [],
+    "liveNow": false,
+    "preload": false,
+    "tags": [],
+    "timeSettings": {
+      "timezone": "browser",
+      "from": "now-15m",
+      "to": "now",
+      "autoRefresh": "30s",
+      "autoRefreshIntervals": [
+        "5s",
+        "10s",
+        "30s",
+        "1m",
+        "5m",
+        "15m",
+        "30m",
+        "1h",
+        "2h",
+        "1d"
+      ],
+      "hideTimepicker": false,
+      "fiscalYearStartMonth": 0
+    },
+    "title": "Batch Results (Lab)",
+    "variables": [
+      {
+        "kind": "QueryVariable",
+        "spec": {
+          "name": "job",
+          "current": {
+            "text": "CSTR_AAA(demo-ftp-batch)",
+            "value": "CSTR_AAA(demo-ftp-batch)"
+          },
+          "label": "작업",
+          "hide": "dontHide",
+          "refresh": "onDashboardLoad",
+          "skipUrlSync": false,
+          "query": {
+            "kind": "DataQuery",
+            "group": "yesoreyeram-infinity-datasource",
+            "version": "v0",
+            "datasource": {
+              "name": "bg4jzo9zz35z4f"
+            },
+            "spec": {
+              "infinityQuery": {
+                "columns": [
+                  {
+                    "selector": "name",
+                    "text": "",
+                    "type": "string"
+                  }
+                ],
+                "computed_columns": [],
+                "data": "values\nfoo\nbar\nbaz",
+                "filters": [],
+                "format": "table",
+                "parser": "backend",
+                "refId": "",
+                "root_selector": "jobs",
+                "source": "url",
+                "type": "json",
+                "url": "http://jenkins.jenkins.svc.cluster.local:8080/view/batch-monitor/api/json?tree=jobs[name]",
+                "url_options": {
+                  "data": "",
+                  "method": "GET"
+                }
+              },
+              "queryType": "infinity",
+              "refId": "variable"
+            }
+          },
+          "regex": "",
+          "regexApplyTo": "value",
+          "sort": "disabled",
+          "definition": "",
+          "options": [],
+          "multi": false,
+          "includeAll": false,
+          "allowCustomValue": true
+        }
+      },
+      {
+        "kind": "ConstantVariable",
+        "spec": {
+          "name": "jenkins_url",
+          "query": "http://localhost:8080",
+          "current": {
+            "text": "http://localhost:8080",
+            "value": "http://localhost:8080"
+          },
+          "hide": "hideVariable",
+          "skipUrlSync": true
+        }
+      },
+      {
+        "kind": "TextVariable",
+        "spec": {
+          "name": "bno",
+          "current": {
+            "text": "",
+            "value": ""
+          },
+          "query": "",
+          "label": "기준 빌드",
+          "hide": "dontHide",
+          "skipUrlSync": false
+        }
+      }
+    ],
+    "preferences": {
+      "layout": {
+        "kind": "AutoGridLayout",
+        "spec": {
+          "maxColumnCount": 3,
+          "columnWidthMode": "standard",
+          "rowHeightMode": "standard",
+          "items": []
+        }
+      }
+    }
+  }
+}
