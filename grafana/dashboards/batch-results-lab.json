@@ -612,7 +612,7 @@
                         "value": [
                           {
                             "title": "실행 이력 보기",
-                            "url": "/d/adh2ghr/batch-results-lab?var-job=${__value.raw}&var-bno="
+                            "url": "/d/${__dashboard.uid}?var-job=${__value.raw}&var-bno="
                           },
                           {
                             "targetBlank": true,
@@ -852,7 +852,7 @@
                   "links": [
                     {
                       "title": "${__data.fields.job} #${__data.fields.build} 이력 보기",
-                      "url": "/d/adh2ghr/batch-results-lab?var-job=${__data.fields.job}&var-bno=${__data.fields.build}"
+                      "url": "/d/${__dashboard.uid}?var-job=${__data.fields.job}&var-bno=${__data.fields.build}"
                     }
                   ]
                 },
